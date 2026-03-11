@@ -35,7 +35,8 @@ namespace NodeController.Patches.Corner {
 
         [HarmonyBefore(CSURUtil.HARMONY_ID)]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original) {
-            MethodInfo m_GetMinCornerOffset = AccessTools.Method(typeof(NetAI), nameof(NetAI.GetMinCornerOffset));
+            FieldInfo f_minCornerOffset = AccessTools.Field(typeof(NetInfo), nameof(NetInfo.m_minCornerOffset)) ?? throw new Exception("f_minCornerOffset is null");
+            MethodInfo m_GetMinCornerOffset = AccessTools.Method(typeof(NetAI), nameof(NetAI.GetMinCornerOffset)) ?? throw new Exception("m_GetMinCornerOffset is null");
             MethodInfo m_FixMinCornerOffset = AccessTools.Method(typeof(CalculateCorner_MinCornerOffsetPatch), nameof(FixMinCornerOffset));
 
             // apply the flat junctions transpiler
@@ -49,9 +50,9 @@ namespace NodeController.Patches.Corner {
             int n = 0;
             foreach (var instruction in instructions) {
                 yield return instruction;
-                bool is_Callvirt_GetMinCornerOffsetOriginal =
-                    instruction.opcode == OpCodes.Callvirt && instruction.operand == m_GetMinCornerOffset;
-                if (is_Callvirt_GetMinCornerOffsetOriginal) {
+                bool is_ldfld_minCornerOffset = instruction.LoadsField(f_minCornerOffset);
+                bool callsGetMinCornerOffset = instruction.Calls(m_GetMinCornerOffset);
+                if (is_ldfld_minCornerOffset || callsGetMinCornerOffset) {
                     n++;
                     yield return ldarg_startNodeID;
                     yield return ldarg_segmentID;
@@ -61,7 +62,7 @@ namespace NodeController.Patches.Corner {
             }
 
             Log.Debug($"TRANSPILER CalculateCornerPatch: Successfully patched NetSegment.CalculateCorner(). " +
-                $"found {n} instances of Callvirt NetAI.GetMinCornerOffset()");
+                            $"found {n} instances of Ldfld NetInfo.m_minCornerOffset or GetMinCornerOffset()");
             yield break;
         }
     }
