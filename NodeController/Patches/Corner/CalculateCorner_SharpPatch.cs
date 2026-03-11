@@ -30,10 +30,8 @@ static class CalculateCorner_SharpPatch {
     static MethodBase TargetMethod() {
         // public void CalculateCorner(ushort segmentID, bool heightOffset, bool start, bool leftSide,
         // out Vector3 cornerPos, out Vector3 cornerDirection, out bool smooth)
-        return typeof(NetSegment).GetMethod(
-                nameof(NetSegment.CalculateCorner),
-                BindingFlags.Public | BindingFlags.Static) ??
-                throw new System.Exception("CalculateCornerPatch Could not find target method.");
+        return AccessTools.Method(typeof(NetSegment), nameof(NetSegment.CalculateCorner), [typeof(NetInfo), typeof(Vector3), typeof(Vector3), typeof(Vector3), typeof(Vector3), typeof(NetInfo), typeof(Vector3), typeof(Vector3), typeof(Vector3), typeof(NetInfo), typeof(Vector3), typeof(Vector3), typeof(Vector3), typeof(ushort), typeof(ushort), typeof(bool), typeof(bool), typeof(Vector3).MakeByRefType(), typeof(Vector3).MakeByRefType(), typeof(bool).MakeByRefType(), typeof(float)])
+            ?? throw new System.Exception("CalculateCornerPatch Could not find target method.");
     }
 
     delegate float Max(float a, float b);
@@ -54,14 +52,14 @@ static class CalculateCorner_SharpPatch {
             new CodeInstruction(OpCodes.Call, mModifySharpness),
         });
 
-        const int locLessThan140 = 27;
+        const int locLessThan140 = 29;
         int iStoreLessThan140 = codes.Search(c => c.IsStLoc(locLessThan140));
         codes.InsertInstructions(iStoreLessThan140, // insert before
-            new[] {
+            [
             TranspilerUtils.GetLDArg(original, "ignoreSegmentID"),
             TranspilerUtils.GetLDArg(original, "startNodeID"),
             new CodeInstruction(OpCodes.Call, mModify140),
-        });
+        ]);
 
         return codes;
 
