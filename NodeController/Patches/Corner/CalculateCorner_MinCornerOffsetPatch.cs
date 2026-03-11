@@ -28,17 +28,15 @@ namespace NodeController.Patches.Corner {
 
         [UsedImplicitly]
         static MethodBase TargetMethod() {
-            return typeof(NetSegment).GetMethod(
-                    nameof(NetSegment.CalculateCorner), [typeof(NetInfo) , typeof(Vector3) , typeof(Vector3) , typeof(Vector3) , typeof(Vector3) , typeof(NetInfo) , typeof(Vector3) , typeof(Vector3) , typeof(Vector3) , typeof(NetInfo) , typeof(Vector3) , typeof(Vector3) , typeof(Vector3) , typeof(ushort) , typeof(ushort) , typeof(bool) , typeof(bool) , typeof(Vector3).MakeByRefType() , typeof(Vector3).MakeByRefType() , typeof(bool).MakeByRefType() , typeof(float)],
-                    BindingFlags.Public | BindingFlags.Static) ??
+            return AccessTools.Method(typeof(NetSegment), nameof(NetSegment.CalculateCorner), [typeof(NetInfo), typeof(Vector3), typeof(Vector3), typeof(Vector3), typeof(Vector3), typeof(NetInfo), typeof(Vector3), typeof(Vector3), typeof(Vector3), typeof(NetInfo), typeof(Vector3), typeof(Vector3), typeof(Vector3), typeof(ushort), typeof(ushort), typeof(bool), typeof(bool), typeof(Vector3).MakeByRefType(), typeof(Vector3).MakeByRefType(), typeof(bool).MakeByRefType(), typeof(float)]) ??
                     throw new Exception("CalculateCornerPatch Could not find target method.");
         }
 
-        static MethodInfo mGetMinCornerOffsetOriginal = ReflectionHelpers.GetMethod(
-            typeof(NetAI), nameof(NetAI.GetMinCornerOffset));
 
-            MethodInfo m_FixMinCornerOffset = ReflectionHelpers.GetMethod(
-                typeof(CalculateCorner_MinCornerOffsetPatch), nameof(FixMinCornerOffset));
+        [HarmonyBefore(CSURUtil.HARMONY_ID)]
+        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original) {
+            MethodInfo m_GetMinCornerOffset = AccessTools.Method(typeof(NetAI), nameof(NetAI.GetMinCornerOffset));
+            MethodInfo m_FixMinCornerOffset = AccessTools.Method(typeof(CalculateCorner_MinCornerOffsetPatch), nameof(FixMinCornerOffset));
 
             // apply the flat junctions transpiler
             instructions = FlatJunctionsCommons.ModifyFlatJunctionsTranspiler(instructions, original);
@@ -52,7 +50,7 @@ namespace NodeController.Patches.Corner {
             foreach (var instruction in instructions) {
                 yield return instruction;
                 bool is_Callvirt_GetMinCornerOffsetOriginal =
-                    instruction.opcode == OpCodes.Callvirt && instruction.operand == mGetMinCornerOffsetOriginal;
+                    instruction.opcode == OpCodes.Callvirt && instruction.operand == m_GetMinCornerOffset;
                 if (is_Callvirt_GetMinCornerOffsetOriginal) {
                     n++;
                     yield return ldarg_startNodeID;

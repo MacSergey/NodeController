@@ -3,7 +3,6 @@ namespace NodeController {
     using ColossalFramework.Math;
     using ColossalFramework.UI;
     using CSUtil.Commons;
-    using Epic.OnlineServices.Presence;
     using KianCommons;
     using KianCommons.Math;
     using KianCommons.Plugins;
