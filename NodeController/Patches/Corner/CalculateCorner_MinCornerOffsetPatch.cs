@@ -9,6 +9,7 @@ namespace NodeController.Patches.Corner {
     using System.Collections.Generic;
     using System.Reflection;
     using System.Reflection.Emit;
+    using UnityEngine;
     using static KianCommons.Patches.TranspilerUtils;
 
     [UsedImplicitly]
@@ -28,19 +29,13 @@ namespace NodeController.Patches.Corner {
         [UsedImplicitly]
         static MethodBase TargetMethod() {
             return typeof(NetSegment).GetMethod(
-                    nameof(NetSegment.CalculateCorner),
+                    nameof(NetSegment.CalculateCorner), [typeof(NetInfo) , typeof(Vector3) , typeof(Vector3) , typeof(Vector3) , typeof(Vector3) , typeof(NetInfo) , typeof(Vector3) , typeof(Vector3) , typeof(Vector3) , typeof(NetInfo) , typeof(Vector3) , typeof(Vector3) , typeof(Vector3) , typeof(ushort) , typeof(ushort) , typeof(bool) , typeof(bool) , typeof(Vector3).MakeByRefType() , typeof(Vector3).MakeByRefType() , typeof(bool).MakeByRefType() , typeof(float)],
                     BindingFlags.Public | BindingFlags.Static) ??
                     throw new Exception("CalculateCornerPatch Could not find target method.");
         }
 
-        [HarmonyBefore(CSURUtil.HARMONY_ID)]
-        public static IEnumerable<CodeInstruction> Transpiler(
-            IEnumerable<CodeInstruction> instructions, MethodBase original) {
-            FieldInfo f_minCornerOffset =
-                typeof(NetInfo).GetField(nameof(NetInfo.m_minCornerOffset)) ??
-                throw new Exception("f_minCornerOffset is null");
-            MethodInfo m_GetMinCornerOffset =
-                typeof(NetAI).GetMethod(nameof(NetAI.GetMinCornerOffset), throwOnError: true);
+        static MethodInfo mGetMinCornerOffsetOriginal = ReflectionHelpers.GetMethod(
+            typeof(NetAI), nameof(NetAI.GetMinCornerOffset));
 
             MethodInfo m_FixMinCornerOffset = ReflectionHelpers.GetMethod(
                 typeof(CalculateCorner_MinCornerOffsetPatch), nameof(FixMinCornerOffset));
@@ -56,9 +51,9 @@ namespace NodeController.Patches.Corner {
             int n = 0;
             foreach (var instruction in instructions) {
                 yield return instruction;
-                bool is_ldfld_minCornerOffset = instruction.LoadsField(f_minCornerOffset);
-                bool callsGetMinCornerOffset = instruction.Calls(m_GetMinCornerOffset);
-                if (is_ldfld_minCornerOffset || callsGetMinCornerOffset) {
+                bool is_Callvirt_GetMinCornerOffsetOriginal =
+                    instruction.opcode == OpCodes.Callvirt && instruction.operand == mGetMinCornerOffsetOriginal;
+                if (is_Callvirt_GetMinCornerOffsetOriginal) {
                     n++;
                     yield return ldarg_startNodeID;
                     yield return ldarg_segmentID;
@@ -68,7 +63,7 @@ namespace NodeController.Patches.Corner {
             }
 
             Log.Debug($"TRANSPILER CalculateCornerPatch: Successfully patched NetSegment.CalculateCorner(). " +
-                $"found {n} instances of Ldfld NetInfo.m_minCornerOffset or GetMinCornerOffset()");
+                $"found {n} instances of Callvirt NetAI.GetMinCornerOffset()");
             yield break;
         }
     }

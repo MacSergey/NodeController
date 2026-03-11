@@ -46,7 +46,7 @@
     </Reference>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <PackageReference Include="CitiesHarmony.API" Version="2.1.0" />
+    <PackageReference Include="CitiesHarmony.API" Version="2.2.0" />
     <PackageReference Include="Mono.Unofficial.pdb2mdb" Version="4.2.3.4" />
     <PackageReference Include="GitInfo" Version="2.2.0">
       <PrivateAssets>all</PrivateAssets>

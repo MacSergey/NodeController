@@ -17,7 +17,7 @@ namespace NodeController.Patches.Corner {
             // public void CalculateCorner(ushort segmentID, bool heightOffset, bool start, bool leftSide,
             // out Vector3 cornerPos, out Vector3 cornerDirection, out bool smooth)
             return typeof(NetSegment).GetMethod(
-                    nameof(NetSegment.CalculateCorner),
+                    nameof(NetSegment.CalculateCorner), [typeof(ushort) , typeof(bool) , typeof(bool) , typeof(bool) , typeof(Vector3).MakeByRefType() , typeof(Vector3).MakeByRefType() , typeof(bool).MakeByRefType() , typeof(float)],
                     BindingFlags.Public | BindingFlags.Instance) ??
                     throw new System.Exception("CalculateCornerPatch Could not find target method.");
         }
